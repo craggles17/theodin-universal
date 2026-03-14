@@ -1,0 +1,29 @@
+name: Run Experiments
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 0 * * 0"  # Weekly on Sunday
+
+jobs:
+  experiments:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: astral-sh/setup-uv@v1
+      - name: Install dependencies
+        run: uv sync
+      - name: Run fast experiments
+        run: |
+          ./scripts/run_experiment.py --experiment cross_language --limit 10
+      - name: Update dashboard
+        run: |
+          python scripts/generate_dashboard.py
+      - name: Commit results
+        run: |
+          git config user.name "theodin-bot"
+          git config user.email "bot@theodin.dev"
+          git add results/
+          git commit -m "chore: update experiment results" || true
+          git push || true
